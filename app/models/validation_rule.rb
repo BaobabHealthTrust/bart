@@ -18,7 +18,6 @@ class ValidationRule < ActiveRecord::Base
     return art_patients
   end
 
-<<<<<<< HEAD
   def self.dispensation_without_prescription(end_date = Date.today)
     unprescribed = Observation.find_by_sql("
                                   SELECT DISTINCT(encounter.patient_id)
@@ -66,7 +65,7 @@ class ValidationRule < ActiveRecord::Base
                                   AND patient_id = encounter.patient_id)")
     return no_appointment.length
   end
-=======
+
   def self.death_date_less_than_last_encounter_date_and_less_than_date_of_birth(end_date = Date.today)
     PatientProgram.find_by_sql("SELECT DISTINCT(prd.patient_id)
 																FROM patient_registration_dates prd
@@ -236,5 +235,4 @@ class ValidationRule < ActiveRecord::Base
 			
 	end	
 
->>>>>>> 3637abfb193f85699fe8e1a18ba0b50595b6e4c1
 end
