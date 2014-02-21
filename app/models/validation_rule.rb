@@ -133,5 +133,58 @@ class ValidationRule < ActiveRecord::Base
                                             AND o.obs_datetime <= '#{@end_date}'
                                             GROUP BY prd.patient_id").collect{|p| p.patient_id}
   end
+  
+	def self.encounters_without_obs_or_orders(end_date = Date.today)
+		
+		# Query for encounters without obs or orders
+		# By kenneth Kapundi
+		
+		start_date = Encounter.find_by_sql("SELECT MIN(encounter_datetime) start_date FROM encounter")
+		start_date = start_date.blank? ? "1900-01-01 00:00:00" : start_date.first.start_date
+				
+		self.find_by_sql(["
+			SELECT DISTINCT (enc.patient_id) FROM encounter enc
+					LEFT JOIN obs o ON o.encounter_id = enc.encounter_id
+					LEFT JOIN orders od ON od.encounter_id = enc.encounter_id
+			WHERE o.encounter_id IS NULL AND od.encounter_id IS NULL
+				AND enc.encounter_datetime BETWEEN ? AND ?", start_date, end_date  
+			]).map(&:patient_id)		
+		
+	end
+	
+	def self.start_date_before_birth(end_date = Date.today)
+		
+		# Query for patients whose earliest start date is less that date of birth
+		# By Kenneth Kapundi
+		
+		start_date = Encounter.find_by_sql("SELECT MIN(encounter_datetime) start_date FROM encounter")
+		start_date = start_date.blank? ? "1900-01-01 00:00:00" : start_date.first.start_date
+		
+		self.find_by_sql(["
+			SELECT DISTINCT(prd.patient_id) FROM patient_registration_dates prd 
+    		INNER JOIN patient p ON p.patient_id = prd.patient_id AND p.voided = 0
+    		INNER JOIN encounter enc ON enc.patient_id = prd.patient_id
+			WHERE DATEDIFF(prd.registration_date, p.birthdate) <= 0
+				AND enc.encounter_datetime BETWEEN ? AND ?", start_date, end_date  
+			]).map(&:patient_id)		
+		
+	end
+	
+	def self.visit_after_death(end_date = Date.today)
+		
+		# Query for patients with followup visit after death
+		# By Kenneth Kapundi
+		
+		start_date = Encounter.find_by_sql("SELECT MIN(encounter_datetime) start_date FROM encounter")
+		start_date = start_date.blank? ? "1900-01-01 00:00:00" : start_date.first.start_date
+		
+		self.find_by_sql(["
+		SELECT DISTINCT(p.patient_id) FROM patient p 
+    		INNER JOIN encounter enc ON enc.patient_id = p.patient_id 
+        	AND p.voided = 0 AND enc.encounter_datetime > p.death_date
+			WHERE enc.encounter_datetime BETWEEN ? AND ?", start_date, end_date  
+			]).map(&:patient_id)		
+			
+	end	
 
 end
