@@ -51,4 +51,18 @@ class ValidationRule < ActiveRecord::Base
     
     return patient_ids 
   end
+
+  def self.check_every_ART_patient_has_HIV_Clinical_Registration(date)
+			#Task 32
+			#SQL to check for every ART patient should have an HIV First Visit
+
+			encounter_type_id = EncounterType.find_by_name("HIV First visit").encounter_type_id
+
+			PatientRegistrationDate.find_by_sql("
+				SELECT p.patient_id
+				FROM patient_registration_dates p LEFT JOIN (SELECT * FROM encounter WHERE encounter_type = #{encounter_type_id}) e 
+						ON p.patient_id = e.patient_id
+				WHERE e.encounter_type IS NULL AND p.registration_date <= DATE('#{date}');
+			").map(&:patient_id)
+	end
 end
