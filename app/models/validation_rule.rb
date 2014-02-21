@@ -108,11 +108,164 @@ class ValidationRule < ActiveRecord::Base
 
    unless total_registered == total_sum
     		return false
-    else
+   else
     		return true
-    end
+   end
 	    
   end
    
-   
+  def self.validate_presence_of_vitals_without_weight(end_date)
+    # Developer   : Precious Bondwe
+    # Date        : 21/02/2014
+    # Purpose     : Return Patient IDs for patients having Vitals encounters without weight 
+    # Amendments  :
+
+    weight_concept = Concept.find_by_name('weight').concept_id
+    encounter_type = EncounterType.find_by_name('Height/Weight').id
+    
+    patient_ids = ValidationRule.find_by_sql("SELECT DISTINCT e.patient_id 
+                          FROM encounter e 
+                              LEFT JOIN obs o ON e.encounter_id = o.encounter_id AND o.concept_id = #{weight_concept} AND o.voided = 0
+                               WHERE o.concept_id IS NULL AND e.encounter_type = #{encounter_type}   
+                               AND e.encounter_datetime <= '#{end_date}'").map(&:patient_id) 
+    
+    return patient_ids 
+  end
+
+  def self.check_every_ART_patient_has_HIV_Clinical_Registration(date)
+			#Task 32
+			#SQL to check for every ART patient should have an HIV First Visit
+
+			encounter_type_id = EncounterType.find_by_name("HIV First visit").encounter_type_id
+
+			PatientRegistrationDate.find_by_sql("
+				SELECT p.patient_id
+				FROM patient_registration_dates p LEFT JOIN (SELECT * FROM encounter WHERE encounter_type = #{encounter_type_id}) e 
+						ON p.patient_id = e.patient_id
+				WHERE e.encounter_type IS NULL AND p.registration_date <= DATE('#{date}');
+			").map(&:patient_id)
+	end
+
+  def self.male_patients_with_pregnant_obs(end_date = Date.today)
+    @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
+
+    pregnant_ids = [Concept.find_by_name("PREGNANT").concept_id,
+                    Concept.find_by_name("PREGNANT WHEN ART WAS STARTED").concept_id]
+
+    #Query pulling all male patients with pregnant observations
+    male_pats_with_preg_obs = ValidationRule.find_by_sql("
+                                      SELECT prd.patient_id, p.gender,
+                                             prd.registration_date, o.concept_id,
+                                             o.value_coded, o.obs_datetime
+                                      FROM patient_registration_dates prd
+	                                      INNER JOIN patient p ON p.patient_id = prd.patient_id
+	                                        AND p.voided = 0
+                                        INNER JOIN obs o ON o.patient_id = p.patient_id
+                                         AND o.voided = 0
+                                      WHERE p.gender = 'Male'
+                                      AND (o.concept_id IN (#{pregnant_ids.join(',')})
+                                        OR o.value_coded IN (#{pregnant_ids.join(',')}))
+                                      AND o.obs_datetime <= '#{@end_date}'
+                                      GROUP BY prd.patient_id").collect{|p| p.patient_id}
+  end
+
+  def self.male_patients_with_breastfeeding_obs(end_date = Date.today)
+    @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
+
+    breastfeeding_id = Concept.find_by_name("BREASTFEEDING").concept_id
+
+    #Query pulling all male patients with breastfeeding observations
+    male_pats_with_breastfeed_obs = ValidationRule.find_by_sql("
+                                      SELECT prd.patient_id, p.gender,
+                                             prd.registration_date, o.concept_id,
+                                             o.value_coded, o.obs_datetime
+                                      FROM patient_registration_dates prd
+	                                      INNER JOIN patient p ON p.patient_id = prd.patient_id
+	                                        AND p.voided = 0
+                                        INNER JOIN obs o ON o.patient_id = p.patient_id
+                                         AND o.voided = 0
+                                      WHERE p.gender = 'Male'
+                                      AND (o.concept_id = #{breastfeeding_id}
+                                        OR o.value_coded = #{breastfeeding_id})
+                                      AND o.obs_datetime <= '#{@end_date}'
+                                      GROUP BY prd.patient_id").collect{|p| p.patient_id}
+  end
+
+  def self.male_patients_with_family_planning_methods_obs(end_date = Date.today)
+    @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
+
+    family_planning_ids = [Concept.find_by_name("FAMILY PLANNING METHOD").concept_id,
+                         Concept.find_by_name("CURRENTLY USING FAMILY PLANNING METHOD").concept_id]
+
+    #Query pulling all male patients with family planning methods observations
+    male_pats_with_family_planning_obs = ValidationRule.find_by_sql("
+                                            SELECT prd.patient_id, p.gender,
+                                                   prd.registration_date, o.concept_id,
+                                                   o.value_coded, o.obs_datetime
+                                            FROM patient_registration_dates prd
+	                                            INNER JOIN patient p ON p.patient_id = prd.patient_id
+	                                              AND p.voided = 0
+                                              INNER JOIN obs o ON o.patient_id = p.patient_id
+                                               AND o.voided = 0
+                                            WHERE p.gender = 'Male'
+                                            AND (o.concept_id IN (#{family_planning_ids.join(',')})
+                                              OR o.value_coded IN (#{family_planning_ids.join(',')}))
+                                            AND o.obs_datetime <= '#{@end_date}'
+                                            GROUP BY prd.patient_id").collect{|p| p.patient_id}
+  end
+  
+	def self.encounters_without_obs_or_orders(end_date = Date.today)
+		
+		# Query for encounters without obs or orders
+		# By kenneth Kapundi
+		
+		start_date = Encounter.find_by_sql("SELECT MIN(encounter_datetime) start_date FROM encounter")
+		start_date = start_date.blank? ? "1900-01-01 00:00:00" : start_date.first.start_date
+				
+		self.find_by_sql(["
+			SELECT DISTINCT (enc.patient_id) FROM encounter enc
+					LEFT JOIN obs o ON o.encounter_id = enc.encounter_id
+					LEFT JOIN orders od ON od.encounter_id = enc.encounter_id
+			WHERE o.encounter_id IS NULL AND od.encounter_id IS NULL
+				AND enc.encounter_datetime BETWEEN ? AND ?", start_date, end_date  
+			]).map(&:patient_id)		
+		
+	end
+	
+	def self.start_date_before_birth(end_date = Date.today)
+		
+		# Query for patients whose earliest start date is less that date of birth
+		# By Kenneth Kapundi
+		
+		start_date = Encounter.find_by_sql("SELECT MIN(encounter_datetime) start_date FROM encounter")
+		start_date = start_date.blank? ? "1900-01-01 00:00:00" : start_date.first.start_date
+		
+		self.find_by_sql(["
+			SELECT DISTINCT(prd.patient_id) FROM patient_registration_dates prd 
+    		INNER JOIN patient p ON p.patient_id = prd.patient_id AND p.voided = 0
+    		INNER JOIN encounter enc ON enc.patient_id = prd.patient_id
+			WHERE DATEDIFF(prd.registration_date, p.birthdate) <= 0
+				AND enc.encounter_datetime BETWEEN ? AND ?", start_date, end_date  
+			]).map(&:patient_id)		
+		
+	end
+	
+	def self.visit_after_death(end_date = Date.today)
+		
+		# Query for patients with followup visit after death
+		# By Kenneth Kapundi
+		
+		start_date = Encounter.find_by_sql("SELECT MIN(encounter_datetime) start_date FROM encounter")
+		start_date = start_date.blank? ? "1900-01-01 00:00:00" : start_date.first.start_date
+		
+		self.find_by_sql(["
+		SELECT DISTINCT(p.patient_id) FROM patient p 
+    		INNER JOIN encounter enc ON enc.patient_id = p.patient_id 
+        	AND p.voided = 0 AND enc.encounter_datetime > p.death_date
+			WHERE enc.encounter_datetime BETWEEN ? AND ?", start_date, end_date  
+			]).map(&:patient_id)		
+			
+	end	
+
+>>>>>>> 3637abfb193f85699fe8e1a18ba0b50595b6e4c1
 end
