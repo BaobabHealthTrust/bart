@@ -72,6 +72,7 @@ class ValidationRule < ActiveRecord::Base
     pregnant_ids = [Concept.find_by_name("PREGNANT").concept_id,
                     Concept.find_by_name("PREGNANT WHEN ART WAS STARTED").concept_id]
 
+    #Query pulling all male patients with pregnant observations
     male_pats_with_preg_obs = ValidationRule.find_by_sql("
                                       SELECT prd.patient_id, p.gender,
                                              prd.registration_date, o.concept_id,
@@ -93,6 +94,7 @@ class ValidationRule < ActiveRecord::Base
 
     breastfeeding_id = Concept.find_by_name("BREASTFEEDING").concept_id
 
+    #Query pulling all male patients with breastfeeding observations
     male_pats_with_breastfeed_obs = ValidationRule.find_by_sql("
                                       SELECT prd.patient_id, p.gender,
                                              prd.registration_date, o.concept_id,
@@ -115,6 +117,7 @@ class ValidationRule < ActiveRecord::Base
     family_planning_ids = [Concept.find_by_name("FAMILY PLANNING METHOD").concept_id,
                          Concept.find_by_name("CURRENTLY USING FAMILY PLANNING METHOD").concept_id]
 
+    #Query pulling all male patients with family planning methods observations
     male_pats_with_family_planning_obs = ValidationRule.find_by_sql("
                                             SELECT prd.patient_id, p.gender,
                                                    prd.registration_date, o.concept_id,
