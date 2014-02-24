@@ -26,7 +26,8 @@ class ValidationRule < ActiveRecord::Base
                                   INNER JOIN drug_order USING(order_id)
                                   INNER JOIN drug ON drug.drug_id = drug_order.drug_inventory_id
                                   INNER JOIN concept_set ON concept_set.concept_id = drug.concept_id
-                                  WHERE concept_set.concept_set = 460 AND
+                                  WHERE concept_set.concept_set = 460
+                                  AND DATE(orders.start_date)  <= '#{end_date}' AND
                                   orders.voided = 0 AND
                                   NOT EXISTS (
                                   SELECT patient_id, DATE(p.prescription_datetime) AS visit_date, p.drug_id
@@ -44,6 +45,7 @@ class ValidationRule < ActiveRecord::Base
                                   INNER JOIN encounter USING(encounter_id)
                                   INNER JOIN drug_order USING(order_id)
                                   WHERE orders.voided = 0
+                                  AND DATE(orders.start_date)  <= '#{end_date}'
                                   AND NOT EXISTS (
                                   SELECT patient_id FROM obs
                                   WHERE concept_id = (SELECT concept_id FROM concept WHERE name = 'APPOINTMENT DATE')
@@ -58,6 +60,7 @@ class ValidationRule < ActiveRecord::Base
                                   INNER JOIN encounter USING(encounter_id)
                                   INNER JOIN drug_order USING(order_id)
                                   WHERE orders.voided = 0
+                                  AND DATE(orders.start_date)  <= '#{end_date}'
                                   AND NOT EXISTS (
                                   SELECT patient_id FROM obs
                                   WHERE concept_id = (SELECT concept_id FROM concept WHERE name = 'APPOINTMENT DATE')
