@@ -183,10 +183,11 @@ class ValidationRule < ActiveRecord::Base
     return patient_ids 
   end
 
-  def self.check_every_ART_patient_has_HIV_First_Visit(date)
+  def self.check_every_ART_patient_has_HIV_First_Visit(date = Date.today)
 			#Task 32
 			#SQL to check for every ART patient should have an HIV First Visit
 
+			date = date.to_date.strftime('%Y-%m-%d 23:59:59')
 			encounter_type_id = EncounterType.find_by_name("HIV First visit").encounter_type_id
 
 			PatientRegistrationDate.find_by_sql("
@@ -318,11 +319,12 @@ class ValidationRule < ActiveRecord::Base
 			
 	end	
 
-	def self.every_visit_of_patients_who_are_under_18_should_have_height_and_weight(date)
+	def self.every_visit_of_patients_who_are_under_18_should_have_height_and_weight(date = Date.today)
 
 		#Task 31
 		#SQL for every visit of patients who are under 18 should have height and weight
 
+		date = date.to_date.strftime('%Y-%m-%d 23:59:59')
 		encounter_type_id = EncounterType.find_by_name("Height/Weight").encounter_type_id
 		height_id = Concept.find_by_name("Height").concept_id
 		weight_id = Concept.find_by_name("Weight").concept_id
@@ -342,5 +344,14 @@ class ValidationRule < ActiveRecord::Base
 					WHERE age < 18 AND e.encounter_type = #{encounter_type_id} AND concept_id IN (#{height_id}, #{weight_id})
 					GROUP BY visit.patient_id, visit.encounter_datetime) weight_and_height_check
 			WHERE Weight_and_Height < 2 AND encounter_datetime <= DATE('#{date}')").map(&:patient_id)
+	end
+
+	def every_outcome_needs_a_date(date = Date.today)
+
+		#Task #40
+		#Every outcome needs a date
+		date = date.to_date.strftime('%Y-%m-%d 23:59:59')
+
+		PatientHistoricalOutcome.all(:conditions=>["outcome_date is null"]).map(&:patient_id)
 	end
 end
