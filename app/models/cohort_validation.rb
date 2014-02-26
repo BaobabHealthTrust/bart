@@ -210,9 +210,9 @@ class CohortValidation
   def validate_adherence_sum_zero_to_six_and_seven_plus_needs_to_equal_total_alive_and_on_art
      validation_rule = ValidationRule.find_by_desc("Patients with 0-6 doses missed at their last visit(before end of quarter evaluated), and Patients with 7+ doses missed at their last visit(before end of quarter evaluated) should add up to Total alive and on ART")
      return nil if validation_rule.blank?
-     values = [self.cohort_object['alive_on_ART_patients'],
-				 			self.cohort_object['patients_with_few_dosses_missed'],
-				 			self.cohort_object['patients_with_more_dosses_missed']
+     values = [self.cum_cohort['alive_on_ART_patients'],
+				 			self.cum_cohort['patients_with_few_dosses_missed'],
+				 			self.cum_cohort['patients_with_more_dosses_missed']
 				 			]
 		return self.feed_values(validation_rule.expr, values)
      
@@ -221,11 +221,11 @@ class CohortValidation
   def validate_sum_of_stage_defining_conditions_needs_to_equal_total_registered
     validation_rule = ValidationRule.find_by_desc("[CUMULATIVE] No TB, TB within the last 2 years, Current episode of TB, and Kaposis Sarcoma should add up to Total registered")
     return nil if validation_rule.blank?
-    values = [self.cohort_object['all_patients'],
-				 			self.cohort_object['start_cause_no_tb'],
-				 			self.cohort_object['start_cause_tb_within_two_years'],
-				 			self.cohort_object['start_cause_current_tb'],
-				 			self.cohort_object['start_cause_KS']
+    values = [self.cum_cohort['all_patients'],
+				 			self.cum_cohort['start_cause_no_tb'],
+				 			self.cum_cohort['start_cause_tb_within_two_years'],
+				 			self.cum_cohort['start_cause_current_tb'],
+				 			self.cum_cohort['start_cause_KS']
 				 			]
 		return self.feed_values(validation_rule.expr, values)		
     
