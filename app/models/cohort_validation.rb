@@ -1,10 +1,12 @@
 class CohortValidation
     
-	attr_accessor :cohort_object
+	attr_accessor :cohort_object, :quart_cohort, :cum_cohort
 
 	def initialize(cohort_obj)
 
-		self.cohort_object = cohort_obj	
+		self.cohort_object = cohort_obj
+		self.quart_cohort = cohort_obj["quarterly_data"]
+		self.cum_cohort = cohort_obj["cumulative_data"]	
 	end
 
 	def get_all_differences
@@ -29,7 +31,7 @@ class CohortValidation
 		#By Kenneth Kapundi
 		
 		return nil if expr.scan(/\{\w+\}/).length != val_arr.length
-		return eval(val_arr.inject(expr){|out_str, val| out_str = out_str.sub(/\{\w+\}/, "#{val.length}"); out_str})				
+		return eval(val_arr.inject(expr){|out_str, val| out_str = out_str.sub(/\{\w+\}/, "#{val}"); out_str})				
 	end
 	
 		
@@ -41,13 +43,37 @@ class CohortValidation
 		validation_rule = ValidationRule.find_by_type_id(1)
 		return nil if validation_rule.blank?
 				
-		values = [self.cohort_object['Kaposis Sarcoma'],
-				 				self.cohort_object['Newly total registered'], 
-			 					self.cohort_object['Newly total registered'],
-			 					self.cohort_object['Newly total registered']]
+		values = [self.quart_cohort['all_patients'],
+				 				self.quart_cohort['child_patients'], 
+			 					self.quart_cohort['adult_patients'],
+			 					self.quart_cohort['adult_patients']]
 			 					
 		return self.feed_values(validation_rule.expr, values)		
 	end
+	
+	def validate_kaposis_sarcoma_less_than_total_registered
+		#This method checks that cases of kaposis sarcoma are less than total registered in quarter	
+		#By Kenneth Kapundi
+			
+		validation_rule = ValidationRule.find_by_desc('Patients with kaposis sarcoma')
+		return nil if validation_rule.blank?
+				
+		values = [self.quart_cohort['start_cause_KS'],
+				 			self.quart_cohort['all_patients']]			 					
+		return self.feed_values(validation_rule.expr, values)		
+	end
+	
+	def validate_cumulative_kaposis_sarcoma_less_than_total_ever_registered
+		#This method checks that all scases of kaposis sarcoma are less than total ever registered
+		#By Kenneth Kapundi
+			
+		validation_rule = ValidationRule.find_by_desc('Patients with kaposis sarcoma')
+		return nil if validation_rule.blank?
+				
+		values = [self.cum_cohort['start_cause_KS'],
+				 			self.cum_cohort['all_patients']]			 					
+		return self.feed_values(validation_rule.expr, values)		
+	end	
 		  
 end
 
