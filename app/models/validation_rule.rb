@@ -354,4 +354,55 @@ class ValidationRule < ActiveRecord::Base
 
 		PatientHistoricalOutcome.all(:conditions=>["outcome_date is null"]).map(&:patient_id)
 	end
+
+  def self.patients_without_outcomes(visit_date)
+    visit_date = visit_date.to_date rescue Date.today
+    connection = ActiveRecord::Base.connection
+    patient_ids = []
+    art_patients = connection.select_all("SELECT patient_id FROM patient_registration_dates").collect{|patient|patient["patient_id"]}.uniq.join(', ')
+    without_outcome_ids = connection.select_all("
+        SELECT e.patient_id  FROM encounter e INNER JOIN patient p
+        ON e.patient_id=p.patient_id LEFT JOIN patient_historical_outcomes pho ON
+        pho.patient_id=p.patient_id WHERE e.patient_id IN (#{art_patients})
+        AND pho.outcome_concept_id IS NULL AND DATE(e.encounter_datetime) <= \'#{visit_date}\'
+        GROUP BY patient_id
+      ")
+    without_outcome_ids.each do |pid|
+      patient_ids << pid["patient_id"]
+    end
+    return patient_ids
+  end
+
+  def self.pills_remaining_over_dispensed(visit_date)
+    visit_date = visit_date.to_date rescue Date.today
+    drugs_brought_data = {}
+    patient_ids = []
+    give_drugs_enc = EncounterType.find_by_name('GIVE DRUGS').id #for finding total drugs dispensed
+    art_visit_enc = EncounterType.find_by_name('ART VISIT').id # for finding drugs brought to clinic
+    amount_brought_to_clinic_concept = Concept.find_by_name('WHOLE TABLETS REMAINING AND BROUGHT TO CLINIC').id
+
+    drugs_brought_obs = Observation.find(:all, :joins => [:encounter], :conditions => ["encounter_type =? AND
+      DATE(encounter_datetime) <= ? AND concept_id =? AND voided=0", art_visit_enc,
+        visit_date, amount_brought_to_clinic_concept])
+
+    drugs_brought_obs.each do |obs|
+      patient_id = obs.patient_id
+      obs_date = obs.obs_datetime.to_date
+      drugs_brought_data[obs_date] = {} if drugs_brought_data[obs_date].blank?
+      drugs_brought_data[obs_date][patient_id] = {} if drugs_brought_data[obs_date][patient_id].blank?
+      drugs_brought_data[obs_date][patient_id][:amount_brought_to_clinic] = nil if drugs_brought_data[obs_date][patient_id][:amount_brought_to_clinic].blank?
+      drugs_brought_data[obs_date][patient_id][:amount_dispensed] = nil if drugs_brought_data[obs_date][patient_id][:amount_dispensed].blank?
+      drugs_brought_data[obs_date][patient_id][:amount_brought_to_clinic] = obs.value_numeric
+      amount_dispensed = Encounter.find(:last, :conditions => ["patient_id =? AND encounter_type =?
+          AND DATE(encounter_datetime) <= ?", patient_id, give_drugs_enc, visit_date ]).drug_orders.last.quantity rescue 0
+      drugs_brought_data[obs_date][patient_id][:amount_dispensed] = amount_dispensed
+      drugs_brought = drugs_brought_data[obs_date][patient_id][:amount_brought_to_clinic]
+      drugs_dispensed = drugs_brought_data[obs_date][patient_id][:amount_dispensed]
+      if (drugs_brought.to_i > drugs_dispensed.to_i)
+        patient_ids << patient_id
+      end
+    end
+    return patient_ids
+  end
+  
 end
