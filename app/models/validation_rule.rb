@@ -70,6 +70,8 @@ class ValidationRule < ActiveRecord::Base
   end
 
   def self.death_date_less_than_last_encounter_date_and_less_than_date_of_birth(end_date = Date.today)
+    #Task 41
+
     patient_ids = PatientProgram.find_by_sql("SELECT DISTINCT(prd.patient_id)
 																FROM patient_registration_dates prd
 																INNER JOIN patient p 
@@ -87,6 +89,8 @@ class ValidationRule < ActiveRecord::Base
   end
 
   def self.validate_newly_registered_is_sum_of_initiated_reinited_and_transferred_in(start_date = @start_date, end_date = @end_date)
+    #Task 48
+
     total_registered = []
     total_initiated = []
     total_reinitiated = []
