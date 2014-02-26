@@ -231,7 +231,13 @@ class ReportsController < ApplicationController
     @sort_weights = cumulative_report.names_to_sort_weights
     @cumulative_values['patients_with_unknown_outcomes'] = cumulative_report.patients_with_unknown_outcome.length
     @cumulative_values['tb_status_unknown_patients'] = cumulative_report.tb_status_unknown_patients.length
-
+		
+		cohort_object = Hash.new
+		cohort_object["quarterly_data"] = @quarterly_values.blank? ? {} : @quarterly_values
+		cohort_object["cumulative_data"] = @cumulative_values.blank? ? {} : @cumulative_values
+		cohort_validation = CohortValidation.new(cohort_object)
+		@cohort_validations = cohort_validation.get_all_differences
+			
     render :layout => false and return if params[:id] == "Other"
 
     survival_analysis(@quarter_start , @quarter_end)
