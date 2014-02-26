@@ -92,6 +92,64 @@ class CohortValidation
 							self.cum_cohort['patients_with_unknown_outcomes']]			 					
 		return self.feed_values(validation_rule.expr, values)		
 	end
+
+
+  def validate_all_regimens_not_equal_to_total_alive_and_on_art
+    #validating sum of all regimens should add up to total_alive_and_on_art
+
+    validation_rule = ValidationRule.find_by_desc("1A (D4T+3TC+NVP), 1P (D4T+3TC+NVP), 2A (AZT+3TC+NVP), 2P (AZT+3TC+NVP), 3A (D4T+3TC+EFV), 3P (D4T+3TC+EFV), 4A (AZT+3TC+EFV), 4P (AZT+3TC+EFV), 5A (TDF+3TC+EFV), 6A (TDF+3TC+NVP), 7A (TDF+3TC+LPV/r), 8A (AZT+3TC+LPV/r), 9P (ABC+3TC+LPV/r), and Non-standar")
+    return nil if validation_rule.blank?
+
+    values = [self.cum_cohort['alive_on_ART_patients'],
+              self.cum_cohort['1A'],
+              self.cum_cohort['1P'],
+              self.cum_cohort['2A'],
+              self.cum_cohort['2P'],
+              self.cum_cohort['3A'],
+              self.cum_cohort['3P'],
+              self.cum_cohort['4A'],
+              self.cum_cohort['4P'],
+              self.cum_cohort['5A'],
+              self.cum_cohort['6A'],
+              self.cum_cohort['7A'],
+              self.cum_cohort['8A'],
+              self.cum_cohort['9P'],
+              self.cum_cohort['Other Regimen']]
+
+   return self.feed_values(validation_rule.expr, values)
+  end
+
+  def validate_quartely_all_ages_should_equal_to_quartely_total_registered
+    #validating quartery sum of infants+children+adults+unknow_age
+    #should equal to quartly total registered
+
+    validation_rule = ValidationRule.find_by_desc("[QUARTER] A: Infants (0<24 months at ART initiation), B: Children (24 mths -14 yrs at ART initiation), C: Adults (15 years or older at ART initiation), and Unknown age should add up to Total registered")
+    return nil if validation_rule.blank?
+
+    values = [self.quart_cohort['all_patients'],
+              self.quart_cohort['adult_patients'],
+              self.quart_cohort['child_patients'],
+              self.quart_cohort['adult_patients'],
+              self.quart_cohort['patients_with_unknown_age']]
+
+    return self.feed_values(validation_rule.expr, values)
+  end
+
+  def validate_cumulative_all_ages_should_equal_to_cumulative_total_registered
+    #validating cumulative sum of infants+children+adults+unknow_age
+    #should equal to cumulative total registered
+
+    validation_rule = ValidationRule.find_by_desc("[CUMULATIVE] A: Infants (0<24 months at ART initiation), B: Children (24 mths -14 yrs at ART initiation), C: Adults (15 years or older at ART initiation), and Unknown age should add up to Total registered")
+    return nil if validation_rule.blank?
+
+    values = [self.cum_cohort['all_patients'],
+              self.cum_cohort['adult_patients'],
+              self.cum_cohort['child_patients'],
+              self.cum_cohort['adult_patients'],
+              self.cum_cohort['patients_with_unknown_age']]
+
+    return self.feed_values(validation_rule.expr, values)
+  end
 		  
 end
 
