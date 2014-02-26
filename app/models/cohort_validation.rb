@@ -158,12 +158,12 @@ class CohortValidation
 
 		return nil if validation_rule.blank?
 
-		values = [self.cohort_object['alive_on_ART_patients'],
-				 			self.cohort_object['tb_not_suspected_patients'],
-				 			self.cohort_object['tb_suspected_patients'],
-				 			self.cohort_object['tb_confirmed_not_on_treatment_patients'],
-				 			self.cohort_object['tb_confirmed_on_treatment_patients'],
-				 			self.cohort_object['tb_status_unknown_patients']
+		values = [self.cum_cohort['alive_on_ART_patients'],
+				 			self.cum_cohort['tb_not_suspected_patients'],
+				 			self.cum_cohort['tb_suspected_patients'],
+				 			self.cum_cohort['tb_confirmed_not_on_treatment_patients'],
+				 			self.cum_cohort['tb_confirmed_on_treatment_patients'],
+				 			self.cum_cohort['tb_status_unknown_patients']
 				 			]
 		return self.feed_values(validation_rule.expr, values)
 	end
@@ -175,17 +175,17 @@ class CohortValidation
 		validation_rule = ValidationRule.find_by_desc("[CUMULATIVE] Presumed severe HIV disease in infants, Confirmed HIV infection in infants (PCR), WHO stage 1 or 2, CD4 below threshold, , Children 12-23 mths, Breastfeeding mothers, Pregnant women, WHO stage 3, WHO stage 4, and Unknown/other reason outside ")
 		return nil if validation_rule.blank?
 
-		values = [self.cohort_object['all_patients'],
-							self.cohort_object['infants_presumed_severe_HIV'],
-							self.cohort_object['infants_PCR'],
-							self.cohort_object['who_stage_1_or_2_cd4'],
-							self.cohort_object['who_stage_2_lymphocyte'],
-							self.cohort_object['child_patients'],
-							self.cohort_object['breastfeeding_mothers'],
-							self.cohort_object['started_cause_pregnant'],
-							self.cohort_object['who_stage_3'],
-							self.cohort_object['who_stage_4'],
-							self.cohort_object['start_reason_other']
+		values = [self.cum_cohort['all_patients'],
+							self.cum_cohort['infants_presumed_severe_HIV'],
+							self.cum_cohort['infants_PCR'],
+							self.cum_cohort['who_stage_1_or_2_cd4'],
+							self.cum_cohort['who_stage_2_lymphocyte'],
+							self.cum_cohort['child_patients'],
+							self.cum_cohort['breastfeeding_mothers'],
+							self.cum_cohort['started_cause_pregnant'],
+							self.cum_cohort['who_stage_3'],
+							self.cum_cohort['who_stage_4'],
+							self.cum_cohort['start_reason_other']
 				 		 ]
 		return self.feed_values(validation_rule.expr, values)
 	end
