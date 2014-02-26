@@ -235,7 +235,8 @@ class ReportsController < ApplicationController
 		cohort_object = Hash.new
 		cohort_object["quarterly_data"] = @quarterly_values.blank? ? {} : @quarterly_values
 		cohort_object["cumulative_data"] = @cumulative_values.blank? ? {} : @cumulative_values
-		@cohort_validations = CohortValidation.new(cohort_object)
+		cohort_validation = CohortValidation.new(cohort_object)
+		@cohort_validations = cohort_validation.get_all_differences
 			
     render :layout => false and return if params[:id] == "Other"
 

@@ -51,7 +51,7 @@ class CohortValidation
 		return self.feed_values(validation_rule.expr, values)		
 	end
 	
-	def validate_kaposis_sarcoma_less_than_total_registered
+	def validate_kaposis_sarcoma_less_than_total_registered_in_quarter
 		#This method checks that cases of kaposis sarcoma are less than total registered in quarter	
 		#By Kenneth Kapundi
 			
@@ -74,6 +74,24 @@ class CohortValidation
 				 			self.cum_cohort['all_patients']]			 					
 		return self.feed_values(validation_rule.expr, values)		
 	end	
+	
+	def validate_all_outcomes_equal_to_cumulative_total_registered
+		#This method checks that outcome totals dont exceed total registered	
+		#By Kenneth Kapundi
+		
+		validation_rule = ValidationRule.find_by_desc("Died total, Total alive and on ART, Defaulted (more than 2 months overdue after expected to have run out of ARVs), Stopped taking ARVs (clinician or patient own decision last known alive), Transfered out, and Unknown outcome should add up to Total registe")
+		
+		return nil if validation_rule.blank?
+
+		values = [self.cum_cohort['all_patients'],
+							self.cum_cohort['dead_patients'],
+							self.cum_cohort['alive_on_ART_patients'],
+							self.cum_cohort['defaulters'],
+							self.cum_cohort['art_stopped_patients'],
+							self.cum_cohort['transferred_out_patients'],
+							self.cum_cohort['patients_with_unknown_outcomes']]			 					
+		return self.feed_values(validation_rule.expr, values)		
+	end
 		  
 end
 
