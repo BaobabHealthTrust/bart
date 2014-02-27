@@ -95,7 +95,8 @@ class CohortValidation
 
  def validate_total_registered_is_sum_of_intitiated_reinitiated_and_transfer_in
     #Task 48
-   
+    #ammendment: PB-2014-02-27 - Added missing return and end for this method.
+     
     validation_rule = ValidationRule.find_by_desc("[QUARTER] FT: Patients initiated on ART first time, Re: Patients re-initiated on ART, and TI: Patients transfered in on ART should add up to Total registered")
     return nil if validation_rule.blank?
         
@@ -119,7 +120,9 @@ class CohortValidation
               self.cum_cohort['re_initiated_patients'],
 							self.cum_cohort['transfer_in_patients']
                 ]
-
+    return self.feed_values(validation_rule.expr, values)
+  end
+  
   def validate_all_regimens_not_equal_to_total_alive_and_on_art
     #validating sum of all regimens should add up to total_alive_and_on_art
 
