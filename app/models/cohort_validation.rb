@@ -167,7 +167,7 @@ class CohortValidation
     validation_rule = ValidationRule.find_by_type_id(1)
     return nil if validation_rule.blank?
         
-    values = [self.cum_cohort['patients_started_on_arv_therapy'],
+    values = [self.cum_cohort['alive_on_ART_patients'],
               self.cum_cohort['side_effect_patients']
                 ]
 
