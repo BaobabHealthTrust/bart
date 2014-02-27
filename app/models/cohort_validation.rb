@@ -96,13 +96,13 @@ class CohortValidation
  def validate_total_registered_is_sum_of_intitiated_reinitiated_and_transfer_in
     #Task 48
    
-    validation_rule = ValidationRule.find_by_type_id(1)
+    validation_rule = ValidationRule.find_by_desc("[QUARTER] FT: Patients initiated on ART first time, Re: Patients re-initiated on ART, and TI: Patients transfered in on ART should add up to Total registered")
     return nil if validation_rule.blank?
         
-    values = [self.quart_cohort['patients_started_on_arv_therapy'],
+    values = [self.quart_cohort['all_patients'],
               self.quart_cohort['new_patients'],
               self.quart_cohort['re_initiated_patients'],
-							self.quart_cohort['transfer_ins_started_on_arv_therapy']
+							self.quart_cohort['transfer_in_patients']
                 ]
 
     return self.feed_values(validation_rule.expr, values)
@@ -111,13 +111,13 @@ class CohortValidation
   def validate_cumulative_total_registered_is_sum_of_intitiated_reinitiated_and_transfer_in
     #Task 48
    
-    validation_rule = ValidationRule.find_by_type_id(1)
+    validation_rule = ValidationRule.find_by_desc("[CUMULATIVE] FT: Patients initiated on ART first time, Re: Patients re-initiated on ART, and TI: Patients transfered in on ART should add up to Total registered")
     return nil if validation_rule.blank?
         
-    values = [self.cum_cohort['patients_started_on_arv_therapy'],
+    values = [self.cum_cohort['all_patients'],
               self.cum_cohort['new_patients'],
               self.cum_cohort['re_initiated_patients'],
-							self.cum_cohort['transfer_ins_started_on_arv_therapy']
+							self.cum_cohort['transfer_in_patients']
                 ]
 
   def validate_all_regimens_not_equal_to_total_alive_and_on_art
@@ -164,7 +164,7 @@ class CohortValidation
   def validate_total_alive_and_side_effects
     #Task 57
    
-    validation_rule = ValidationRule.find_by_type_id(1)
+    validation_rule = ValidationRule.find_by_desc("Total patients with side effects should not exceed Total alive and on ART")
     return nil if validation_rule.blank?
         
     values = [self.cum_cohort['alive_on_ART_patients'],
