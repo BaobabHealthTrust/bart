@@ -92,6 +92,50 @@ class CohortValidation
 							self.cum_cohort['patients_with_unknown_outcomes']]			 					
 		return self.feed_values(validation_rule.expr, values)		
 	end
+
+ def validate_total_registered_is_sum_of_intitiated_reinitiated_and_transfer_in
+    #Task 48
+   
+    validation_rule = ValidationRule.find_by_type_id(1)
+    return nil if validation_rule.blank?
+        
+    values = [self.quart_cohort['patients_started_on_arv_therapy'],
+              self.quart_cohort['new_patients'],
+              self.quart_cohort['re_initiated_patients'],
+							self.quart_cohort['transfer_ins_started_on_arv_therapy']
+                ]
+
+    return self.feed_values(validation_rule.expr, values)
+  end
+
+  def validate_cumulative_total_registered_is_sum_of_intitiated_reinitiated_and_transfer_in
+    #Task 48
+   
+    validation_rule = ValidationRule.find_by_type_id(1)
+    return nil if validation_rule.blank?
+        
+    values = [self.cum_cohort['patients_started_on_arv_therapy'],
+              self.cum_cohort['new_patients'],
+              self.cum_cohort['re_initiated_patients'],
+							self.cum_cohort['transfer_ins_started_on_arv_therapy']
+                ]
+
+    return self.feed_values(validation_rule.expr, values)
+  end
+
+  def validate_total_alive_and_side_effects
+    #Task 57
+   
+    validation_rule = ValidationRule.find_by_type_id(1)
+    return nil if validation_rule.blank?
+        
+    values = [self.cum_cohort['patients_started_on_arv_therapy'],
+              self.cum_cohort['side_effect_patients']
+                ]
+
+
+    return self.feed_values(validation_rule.expr, values)
+  end
 		  
 end
 
