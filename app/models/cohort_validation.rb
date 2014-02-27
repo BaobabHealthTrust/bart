@@ -275,5 +275,49 @@ class CohortValidation
     
   end
   
+  def validate_new_total_male_plus_total_pregnant_plus_total_nonpregnant_equals_total_registered
+    
+    # Developer   : Precious Bondwe
+    # Date        : 27/02/2014
+    # Purpose     : Validate Newly (registered males + 
+    #                               registered females (pregnant) + 
+    #                               registered females (non -pregnant)) =
+    #                               total registered  
+    # Amendments  :
+
+   
+    validation_rule = ValidationRule.find_by_expr('{new_total_reg} == {new_males} + {new_non_preg} + {new_preg_all_age}')
+    return nil if validation_rule.blank?
+        
+    values = [self.quart_cohort['all_patients'],
+              self.quart_cohort['male_pattients'],
+              self.quart_cohort['non_pregnant_women'], 
+              self.quart_cohort['pmtct_pregnant_women_on_art']
+                ]
+         
+    return self.feed_values(validation_rule.expr, values)
+  end
+  
+  def validate_cumulative_total_male_plus_total_pregnant_plus_total_nonpregnant_equals_total_registered
+    
+    # Developer   : Precious Bondwe
+    # Date        : 27/02/2014
+    # Purpose     : Validate cumulative (registered males + 
+    #                                   registered females (pregnant) + 
+    #                                   registered females (non -pregnant)) =
+    #                                   total registered  
+    # Amendments  :
+
+   
+    validation_rule = ValidationRule.find_by_expr('{cum_total_reg} == {cum_males} + {cum_non_preg} + {cum_preg_all_age}')
+    return nil if validation_rule.blank?
+        
+    values = [self.cum_cohort['all_patients'],
+              self.cum_cohort['male_pattients'],
+              self.cum_cohort['non_pregnant_women'], 
+              self.cum_cohort['pmtct_pregnant_women_on_art']
+                ]
+    return self.feed_values(validation_rule.expr, values)
+  end
 end
 
