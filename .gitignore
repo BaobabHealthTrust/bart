@@ -14,3 +14,4 @@ doc/*
 doc/plugins
 nbproject/*
 Gemfile.lock
+.idea/*
