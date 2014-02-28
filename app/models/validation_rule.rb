@@ -5,7 +5,7 @@ class ValidationRule < ActiveRecord::Base
     #All methods for now should be here:
     data_consistency_checks['Patients without outcomes'] = "self.patients_without_outcomes(date)"
     #data_consistency_checks['Patients with pills remaining greater than dispensed'] = "self.pills_remaining_over_dispensed(date)"
-    data_consistency_checks['Patients without reason for starting'] = "self.validate_presence_of_start_reason"
+    data_consistency_checks['Patients without reason for starting'] = "self.validate_presence_of_start_reason(date)"
     data_consistency_checks['Patients with missing dispensations'] = "self.prescrition_without_dispensation(date)"
 		data_consistency_checks['Patients with missing prescriptions'] = "self.dispensation_without_prescription(date)"
 		data_consistency_checks['Patients with dispensation without appointment'] = "self.dispensation_without_appointment(date)"
@@ -53,12 +53,12 @@ class ValidationRule < ActiveRecord::Base
     v.save
   end
 
-  def self.validate_presence_of_start_reason
+  def self.validate_presence_of_start_reason(end_date = Date.today)
     #This function checks for patients who do not have a reason for starting ART
 
     start_reason_id = PersonAttributeType.find_by_name("Reason antiretrovirals started").id
-    art_patients = Patient.find_by_sql("SELECT patient_id FROM patient_registration_dates where patient_id not in
-                      (SELECT person_id from person_attribute where person_attribute_type_id = #{start_reason_id} and voided = 0)")
+    art_patients = Patient.find_by_sql("SELECT patient_id FROM patient_registration_dates where registration_date <= '#{end_date}' AND
+                      patient_id not in (SELECT person_id from person_attribute where person_attribute_type_id = #{start_reason_id} and voided = 0)")
 
     return art_patients
   end
