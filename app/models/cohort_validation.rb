@@ -178,7 +178,7 @@ class CohortValidation
 		values = [self.cohort_object['all_patients'],
 							self.cohort_object['infants_presumed_severe_HIV'],
 							self.cohort_object['infants_PCR'],
-							self.cohort_object['who_stage_1_or_2_cd4'],
+							self.cum_cohort['who_stage_1_or_2_cd4'],
 							self.cohort_object['who_stage_2_lymphocyte'],
 							self.cohort_object['child_patients'],
 							self.cohort_object['breastfeeding_mothers'],
