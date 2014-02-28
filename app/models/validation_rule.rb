@@ -344,33 +344,26 @@ class ValidationRule < ActiveRecord::Base
 
   def self.pills_remaining_over_dispensed(visit_date)
     visit_date = visit_date.to_date rescue Date.today
-    drugs_brought_data = {}
     patient_ids = []
     give_drugs_enc = EncounterType.find_by_name('GIVE DRUGS').id #for finding total drugs dispensed
     art_visit_enc = EncounterType.find_by_name('ART VISIT').id # for finding drugs brought to clinic
     amount_brought_to_clinic_concept = Concept.find_by_name('WHOLE TABLETS REMAINING AND BROUGHT TO CLINIC').id
 
-    drugs_brought_obs = Observation.find(:all, :joins => [:encounter], :conditions => ["encounter_type =? AND
-      DATE(encounter_datetime) <= ? AND concept_id =? AND voided=0", art_visit_enc,
-        visit_date, amount_brought_to_clinic_concept])
-
-    drugs_brought_obs.each do |obs|
-      patient_id = obs.patient_id
-      obs_date = obs.obs_datetime.to_date
-      drugs_brought_data[obs_date] = {} if drugs_brought_data[obs_date].blank?
-      drugs_brought_data[obs_date][patient_id] = {} if drugs_brought_data[obs_date][patient_id].blank?
-      drugs_brought_data[obs_date][patient_id][:amount_brought_to_clinic] = nil if drugs_brought_data[obs_date][patient_id][:amount_brought_to_clinic].blank?
-      drugs_brought_data[obs_date][patient_id][:amount_dispensed] = nil if drugs_brought_data[obs_date][patient_id][:amount_dispensed].blank?
-      drugs_brought_data[obs_date][patient_id][:amount_brought_to_clinic] = obs.value_numeric
-      amount_dispensed = Encounter.find(:last, :conditions => ["patient_id =? AND encounter_type =?
-          AND DATE(encounter_datetime) <= ?", patient_id, give_drugs_enc, visit_date ]).drug_orders.last.quantity rescue 0
-      drugs_brought_data[obs_date][patient_id][:amount_dispensed] = amount_dispensed
-      drugs_brought = drugs_brought_data[obs_date][patient_id][:amount_brought_to_clinic]
-      drugs_dispensed = drugs_brought_data[obs_date][patient_id][:amount_dispensed]
-      if (drugs_brought.to_i > drugs_dispensed.to_i)
-        patient_ids << patient_id
-      end
-    end
+    patient_ids = Patient.find_by_sql("
+      SELECT e.patient_id as patient_ID, o.value_numeric as amought_brought_to_clinic,
+      e.encounter_datetime as visit FROM encounter e INNER JOIN
+      obs o ON o.encounter_id = e.encounter_id AND encounter_type = #{art_visit_enc} AND
+      o.concept_id= #{amount_brought_to_clinic_concept} AND o.voided=false AND
+      DATE(e.encounter_datetime) <= \'#{visit_date}\'
+      HAVING
+      amought_brought_to_clinic > (
+      SELECT do.quantity FROM encounter INNER JOIN
+      orders o ON o.encounter_id=encounter.encounter_id INNER JOIN drug_order do  ON
+      do.order_id=o.encounter_id AND encounter.encounter_type = #{give_drugs_enc}
+      AND encounter.patient_id = patient_ID AND o.voided=false
+      WHERE encounter.encounter_datetime < visit AND DATEDIFF(visit, encounter.encounter_datetime) >30 ORDER BY encounter.encounter_datetime
+asc LIMIT 1)
+      ").collect{|patient|patient["patient_ID"]}
     return patient_ids
   end
   
