@@ -4,7 +4,7 @@ class ValidationRule < ActiveRecord::Base
     data_consistency_checks = {}
     #All methods for now should be here:
     data_consistency_checks['Patients without outcomes'] = "self.patients_without_outcomes(date)"
-    data_consistency_checks['Patients with pills remaining greater than dispensed'] = "self.pills_remaining_over_dispensed(date)"
+    #data_consistency_checks['Patients with pills remaining greater than dispensed'] = "self.pills_remaining_over_dispensed(date)"
     data_consistency_checks['Patients without reason for starting'] = "self.validate_presence_of_start_reason"
     data_consistency_checks['Patients with missing dispensations'] = "self.prescrition_without_dispensation(date)"
 		data_consistency_checks['Patients with missing prescriptions'] = "self.dispensation_without_prescription(date)"
@@ -14,10 +14,10 @@ class ValidationRule < ActiveRecord::Base
 		data_consistency_checks['Patients with encounters without obs or orders'] = "self.encounters_without_obs_or_orders(date)"
 		data_consistency_checks['Patients with ART start date before birth'] = "self.start_date_before_birth(date)"
 		data_consistency_checks['Dead patients with follow up visits'] = "self.visit_after_death(date)"
-		data_consistency_checks['Male patients with pregnant observations'] = "self.male_patients_with_pregnant_observation(date)"
+		data_consistency_checks['Male patients with pregnant observations'] = "self.male_patients_with_pregnant_obs(date)"
 		data_consistency_checks['Male patients with breastfeeding observations'] = "self.male_patients_with_breastfeeding_obs(date)"
 		data_consistency_checks['Male patients with family planning methods obs'] = "self.male_patients_with_family_planning_methods_obs(date)"
-		data_consistency_checks['ART patients without HIV clinic registration encounter'] = "self.check_every_ART_patient_has_HIV_Clinical_Registration(date)"
+		data_consistency_checks['ART patients without HIV clinic registration encounter'] = "self.check_every_ART_patient_has_HIV_First_Visit(date)"
 		data_consistency_checks['Under 18 patients without height and weight in visit'] = "self.every_visit_of_patients_who_are_under_18_should_have_height_and_weight(date)"
 		data_consistency_checks['Patients with outcomes without date'] = "self.every_outcome_needs_a_date(date)"
 		
@@ -96,7 +96,7 @@ class ValidationRule < ActiveRecord::Base
                                   WHERE concept_id = (SELECT concept_id FROM concept WHERE name = 'APPOINTMENT DATE')
                                   AND DATE(encounter_datetime) = DATE(obs_datetime)
                                   AND patient_id = encounter.patient_id)").map(&:patient_id)
-    return undispensed.length
+    return undispensed
   end
 
   def self.dispensation_without_appointment(end_date = Date.today)
@@ -111,7 +111,7 @@ class ValidationRule < ActiveRecord::Base
                                   WHERE concept_id = (SELECT concept_id FROM concept WHERE name = 'APPOINTMENT DATE')
                                   AND DATE(encounter_datetime) = DATE(obs_datetime)
                                   AND patient_id = encounter.patient_id)").map(&:patient_id)
-    return no_appointment.length
+    return no_appointment
   end
 
   def self.death_date_less_than_last_encounter_date_and_less_than_date_of_birth(end_date = Date.today)
