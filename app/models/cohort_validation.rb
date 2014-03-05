@@ -38,7 +38,7 @@ class CohortValidation
 		#This method checks that cases of kaposis sarcoma are less than total registered in quarter	
 		#By Kenneth Kapundi
 			
-		validation_rule = ValidationRule.find_by_desc('Patients with kaposis sarcoma')
+		validation_rule = ValidationRule.find_by_expr("{newly_reg} >= {ks}")
 		return nil if validation_rule.blank?
 				
 		values = [self.quart_cohort['start_cause_KS'],
@@ -50,7 +50,7 @@ class CohortValidation
 		#This method checks that all scases of kaposis sarcoma are less than total ever registered
 		#By Kenneth Kapundi
 			
-		validation_rule = ValidationRule.find_by_desc('Patients with kaposis sarcoma')
+		validation_rule = ValidationRule.find_by_desc("{cum_total_reg} >= {total_ks}")
 		return nil if validation_rule.blank?
 				
 		values = [self.cum_cohort['start_cause_KS'],
@@ -62,7 +62,7 @@ class CohortValidation
 		#This method checks that outcome totals dont exceed total registered	
 		#By Kenneth Kapundi
 		
-		validation_rule = ValidationRule.find_by_desc("Died total, Total alive and on ART, Defaulted (more than 2 months overdue after expected to have run out of ARVs), Stopped taking ARVs (clinician or patient own decision last known alive), Transfered out, and Unknown outcome should add up to Total registe")
+		validation_rule = ValidationRule.find_by_desc("{cum_total_reg} == {died_total} + {total_on_art} + {defaulted} + {stopped} + {transfered} + {unknown_outcome}")
 		
 		return nil if validation_rule.blank?
 
