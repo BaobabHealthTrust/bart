@@ -41,8 +41,8 @@ class CohortValidation
 		validation_rule = ValidationRule.find_by_expr("{newly_reg} >= {ks}")
 		return nil if validation_rule.blank?
 				
-		values = [self.quart_cohort['start_cause_KS'],
-				 			self.quart_cohort['all_patients']]			 					
+		values = [self.quart_cohort['all_patients'],
+      self.quart_cohort['start_cause_KS']]
 		return self.feed_values(validation_rule, values)		
 	end
 	
@@ -53,8 +53,8 @@ class CohortValidation
 		validation_rule = ValidationRule.find_by_desc("{cum_total_reg} >= {total_ks}")
 		return nil if validation_rule.blank?
 				
-		values = [self.cum_cohort['start_cause_KS'],
-				 			self.cum_cohort['all_patients']]			 					
+		values = [self.cum_cohort['all_patients'],
+              self.cum_cohort['start_cause_KS']]
 		return self.feed_values(validation_rule, values)		
 	end	
 	
