@@ -251,8 +251,7 @@ class CohortValidation
     values = [self.cum_cohort['all_patients'],
 				 			self.cum_cohort['start_cause_no_tb'],
 				 			self.cum_cohort['start_cause_tb_within_two_years'],
-				 			self.cum_cohort['start_cause_current_tb'],
-				 			self.cum_cohort['start_cause_KS']
+				 			self.cum_cohort['start_cause_current_tb']
 				 			]
 		return self.feed_values(validation_rule, values)		
     
