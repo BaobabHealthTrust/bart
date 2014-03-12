@@ -237,7 +237,7 @@ class ReportsController < ApplicationController
 		cohort_object["cumulative_data"] = @cumulative_values.blank? ? {} : @cumulative_values
 		cohort_validation = CohortValidation.new(cohort_object)
 		@cohort_validations = cohort_validation.get_all_differences
-			
+			raise @cohort_validations.to_yaml
     render :layout => false and return if params[:id] == "Other"
 
     survival_analysis(@quarter_start , @quarter_end)
