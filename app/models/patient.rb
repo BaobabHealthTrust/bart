@@ -3113,15 +3113,73 @@ This seems incompleted, replaced with new method at top
       all_filing_numbers = PatientIdentifier.find(:all, :conditions =>["identifier_type = ? and voided= 0",
                            PatientIdentifierType.find_by_name("Filing number").id],:group=>"patient_id")
       patient_ids = all_filing_numbers.collect{|i|i.patient_id}
-      return Encounter.find_by_sql(["
-        SELECT patient_id, MAX(encounter_datetime) AS last_encounter_id
-        FROM encounter 
-        WHERE patient_id IN (?)
-        AND encounter_type < 13 
-        GROUP BY patient_id
-        ORDER BY last_encounter_id
-        LIMIT 1",patient_ids]).first.patient_id rescue nil 
+
+      #Get all patient with active filling numbers who died
+      patient_to_archive = self.dead_patients_to_archive(patient_ids)
+
+      #Get all patient with active filling numbers who transferred out
+      if patient_to_archive.blank?
+        patient_to_archive = self.transferred_out_patients_to_archive(patient_ids)
+      end
+
+      if patient_to_archive.blank?
+        patient_to_archive = self.patients_with_the_least_encounter_datetime(patient_ids)
+      end
+      
+      return patient_to_archive
     end
+
+  end
+
+  def  self.dead_patients_to_archive(patient_ids = [])
+    concept_id = Concept.find_by_name('Died').id
+    patients = PatientHistoricalOutcome.find(:all,
+      :select => "patient_id, MAX(outcome_date)",
+      :conditions =>["outcome_concept_id = ? AND patient_id IN(?)", 
+      concept_id, patient_ids])
+
+    patients.first.patient_id.to_i unless patients.blank?
+  end
+
+  def  self.transferred_out_patients_to_archive(patient_ids = [])
+    concept_id = Concept.find_by_name('Transfer out').id
+    patients = PatientHistoricalOutcome.find(:all,
+      :select => "patient_id, MAX(outcome_date)",
+      :conditions =>["outcome_concept_id = ? AND patient_id IN(?)", 
+      concept_id, patient_ids])
+
+    patients.first.patient_id.to_i unless patients.blank?
+  end
+
+  def self.patients_with_the_least_encounter_datetime(patient_ids = [])
+    return nil if patient_ids.blank?
+    #Patients with an appointment in the past month and the next 6 weeks from   
+    #current date                                                               
+    appointment_concept = Concept.find(:first,:conditions => ["name IN (?)",'Appointment date'])
+    start_date = (Date.today - 1.month).strftime('%Y-%m-%d 00:00:00')           
+    end_date = (Date.today + 7.month).strftime('%Y-%m-%d 23:59:59')
+
+    patient_not_to_be_archived = Observation.find_by_sql(["                       
+    SELECT patient_id FROM obs                                         
+    WHERE value_datetime BETWEEN (?) AND (?)             
+    AND concept_id = ? GROUP BY patient_id",start_date,end_date,          
+    appointment_concept.id]).map{ |l| l.patient_id }                      
+
+    patient_not_to_be_archived = [0] if patient_not_to_be_archived.blank?
+  
+
+    #The following block will pick a patient with the least encounter datetime  
+    #and passed to be archived minus those patients with an appointment in the next
+    #eight months                                                               
+    return Encounter.find_by_sql(["                                             
+      SELECT patient_id, MAX(encounter_datetime) AS last_encounter_id           
+        FROM encounter                                                            
+        WHERE patient_id IN (?)                                                   
+        AND encounter_type < 13 
+        GROUP BY patient_id                                                       
+        HAVING patient_id NOT IN(?)",patient_ids,encounter_type_ids,              
+     patient_not_to_be_archived]).first.patient rescue nil
+    
   end
 
   def Patient.archive_patient(patient_to_be_archived_id,current_patient)
