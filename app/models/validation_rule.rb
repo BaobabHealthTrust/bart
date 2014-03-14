@@ -1,5 +1,6 @@
 class ValidationRule < ActiveRecord::Base
-
+  has_many :validation_results
+  
   def self.data_consistency_checks(date = Date.today)
     data_consistency_checks = {}
     #All methods for now should be here:
