@@ -11,8 +11,65 @@
   }
 
 </script>
-<div style="height:70px">&nbsp;</div>
-<table style='border-spacing:0px;' >
+
+<style>
+	.tb {
+		position:relative;
+		margin: 0 auto;
+		border: 2px;
+		border-color:white;
+	}
+	.rule {
+		background-color:red;
+		text-align:left;
+		padding-left:20px;
+		border-color:white;
+	}
+
+	.num {
+		width:100px;
+		background-color:red;
+		border-color:white;
+	}
+</style>
+
+<div style="margin-top:0.5cm; margin-bottom:1cm;height:70px">&nbsp;</div>
+	<div style="width:100%; height:auto; background-color: red; max-height:200px; border: 1px solid red; overflow: auto;">
+	
+	<table class="tb">
+		
+		<% success=0 %>
+
+		<% @cohort_validations.each do |v| %>
+			<% if v[1][1].to_s == "true" then %>
+				<% success+=1%>
+				
+				<% if success==1 %>
+					<tr>
+						<td class="num" style="background-color:white;">&nbsp;</td>
+						<td class="rule" style="background-color:white; font-size:18px; font-weight: bold;">This cohort report is internally inconsistent</td>
+					</tr>
+				<% end %>
+		
+				<tr>
+					<td class="num"><%= success %></td>
+					<td class="rule"><%= v[1][0] %></td>
+				</tr>
+				
+			<% end %>
+		<% end %>
+
+
+		<% if success==0 %>
+			<tr>
+				<td style="background-color: #32CD32;">This cohort report is internally consistent</td>
+			</tr>
+		<% end %>
+
+	</table>
+	
+	</div>
+<table style='border-spacing:0px;margin-top:0.5cm' >
   <tr>
     <td>&nbsp;</td>
     <td id='row_header'><b><%= Location.current_health_center %></b></td>
