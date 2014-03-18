@@ -2,6 +2,8 @@ class ValidationRule < ActiveRecord::Base
   has_many :validation_results
   
   def self.data_consistency_checks(date = Date.today)
+    date = date.to_date
+    require 'colorize'
     data_consistency_checks = {}
     #All methods for now should be here:
     data_consistency_checks['Patients without outcomes'] = "self.patients_without_outcomes(date)"
@@ -24,13 +26,14 @@ class ValidationRule < ActiveRecord::Base
 		data_consistency_checks['Patients with outcomes without date'] = "self.every_outcome_needs_a_date(date)"
 		
 		data_consistency_checks = data_consistency_checks.keys.inject({}){|hash, key| 
-		time = Time.now
-		puts "Running query for #{key}"
-		hash[key] = eval(data_consistency_checks[key])
-		period = (Time.now - time).to_i
-		puts "Time taken  :  #{(period/60).to_i} min  and #{(period % 60)} sec  --> #{hash[key].length} patient(s) found"	
-		puts ""	
-		hash}
+      time = Time.now
+      puts "Running query for #{key}"
+      hash[key] = eval(data_consistency_checks[key])
+      period = (Time.now - time).to_i
+      color = hash[key].length > 0 ? "red" : "green"
+      eval("puts 'Time taken  :  #{(period/60).to_i} min  and #{(period % 60)} sec  --> #{hash[key].length} patient(s) found'.#{color}")
+      puts ""
+      hash}
 		
 		
     set_rules = self.find(:all,:conditions =>['type_id = 2'])                   
@@ -131,7 +134,7 @@ class ValidationRule < ActiveRecord::Base
                                 AND (SELECT MAX(encounter_datetime)
                        							 FROM encounter e 
                        							 WHERE e.patient_id = prd.patient_id) < p.birthdate;").map(&:patient_id) 
-     return patient_ids
+    return patient_ids
     
   end
 
@@ -155,13 +158,13 @@ class ValidationRule < ActiveRecord::Base
   end
 
   def self.check_every_ART_patient_has_HIV_First_Visit(date = Date.today)
-			#Task 32
-			#SQL to check for every ART patient should have an HIV First Visit
+    #Task 32
+    #SQL to check for every ART patient should have an HIV First Visit
 
-			date = date.to_date.strftime('%Y-%m-%d 23:59:59')
-			encounter_type_id = EncounterType.find_by_name("HIV First visit").encounter_type_id
+    date = date.to_date.strftime('%Y-%m-%d 23:59:59')
+    encounter_type_id = EncounterType.find_by_name("HIV First visit").encounter_type_id
 
-			PatientRegistrationDate.find_by_sql("
+    PatientRegistrationDate.find_by_sql("
 				SELECT p.patient_id
 				FROM patient_registration_dates p LEFT JOIN (SELECT * FROM encounter WHERE encounter_type = #{encounter_type_id}) e
 						ON p.patient_id = e.patient_id
@@ -173,7 +176,7 @@ class ValidationRule < ActiveRecord::Base
     @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
 
     pregnant_ids = [Concept.find_by_name("PREGNANT").concept_id,
-                    Concept.find_by_name("PREGNANT WHEN ART WAS STARTED").concept_id]
+      Concept.find_by_name("PREGNANT WHEN ART WAS STARTED").concept_id]
 
     #Query pulling all male patients with pregnant observations
     male_pats_with_preg_obs = ValidationRule.find_by_sql("
@@ -218,7 +221,7 @@ class ValidationRule < ActiveRecord::Base
     @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
 
     family_planning_ids = [Concept.find_by_name("FAMILY PLANNING METHOD").concept_id,
-                         Concept.find_by_name("CURRENTLY USING FAMILY PLANNING METHOD").concept_id]
+      Concept.find_by_name("CURRENTLY USING FAMILY PLANNING METHOD").concept_id]
 
     #Query pulling all male patients with family planning methods observations
     male_pats_with_family_planning_obs = ValidationRule.find_by_sql("
