@@ -3138,7 +3138,9 @@ This seems incompleted, replaced with new method at top
       :conditions =>["outcome_concept_id = ? AND patient_id IN(?)", 
       concept_id, patient_ids])
 
-    patients.first.patient_id.to_i unless patients.blank?
+    patient_id = patients.first.patient_id.to_i 
+    return nil if patient_id.blank? or patient_id < 1
+    return patient_id 
   end
 
   def  self.transferred_out_patients_to_archive(patient_ids = [])
@@ -3148,7 +3150,9 @@ This seems incompleted, replaced with new method at top
       :conditions =>["outcome_concept_id = ? AND patient_id IN(?)", 
       concept_id, patient_ids])
 
-    patients.first.patient_id.to_i unless patients.blank?
+    patient_id = patients.first.patient_id.to_i 
+    return nil if patient_id.blank? or patient_id < 1
+    return patient_id 
   end
 
   def self.patients_with_the_least_encounter_datetime(patient_ids = [])
