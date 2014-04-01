@@ -3144,13 +3144,17 @@ This seems incompleted, replaced with new method at top
   end
 
   def  self.transferred_out_patients_to_archive(patient_ids = [])
-    concept_id = Concept.find_by_name('Transfer out').id
-    patients = PatientHistoricalOutcome.find(:all,
-      :select => "patient_id, MAX(outcome_date)",
-      :conditions =>["outcome_concept_id = ? AND patient_id IN(?)", 
-      concept_id, patient_ids])
+    concept_names = ['Transfer Out(With Transfer Note)','Transfer Out(Without Transfer Note)']
+    concept_ids = Concept.find(:all,
+      :conditions => ["name IN(?)",concept_names]).map(&:concept_id).join(',')
 
-    patient_id = patients.first.patient_id.to_i 
+    patients = PatientHistoricalOutcome.find_by_sql("
+      SELECT max(outcome_date) date_outcome,patient_id,outcome_concept_id 
+      FROM openmrs_lighthouse.patient_historical_outcomes 
+      GROUP BY patient_id HAVING outcome_concept_id IN(#{concept_ids}) 
+      AND patient_id IN(#{patient_ids.join(',')}) ORDER BY date_outcome")
+
+    patient_id = patients.first.patient_id.to_i rescue nil 
     return nil if patient_id.blank? or patient_id < 1
     return patient_id 
   end
