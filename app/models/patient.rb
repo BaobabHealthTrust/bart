@@ -3181,7 +3181,7 @@ This seems incompleted, replaced with new method at top
         WHERE patient_id IN (?)                                                   
         AND encounter_type < 13 
         GROUP BY patient_id                                                       
-        HAVING patient_id NOT IN(?)",patient_ids,encounter_type_ids,              
+        HAVING patient_id NOT IN(?)",patient_ids,              
      patient_not_to_be_archived]).first.patient rescue nil
     
   end
