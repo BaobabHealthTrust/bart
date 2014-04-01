@@ -3122,6 +3122,11 @@ This seems incompleted, replaced with new method at top
         patient_to_archive = self.transferred_out_patients_to_archive(patient_ids)
       end
 
+      #Get all patient with active filling numbers who defaulted
+      if patient_to_archive.blank?
+        patient_to_archive = self.defaulted_patients_to_archive(patient_ids)
+      end
+
       if patient_to_archive.blank?
         patient_to_archive = self.patients_with_the_least_encounter_datetime(patient_ids)
       end
@@ -3134,27 +3139,47 @@ This seems incompleted, replaced with new method at top
   def  self.dead_patients_to_archive(patient_ids = [])
     concept_id = Concept.find_by_name('Died').id
     patients = PatientHistoricalOutcome.find(:all,
-      :select => "patient_id, MAX(outcome_date)",
-      :conditions =>["outcome_concept_id = ? AND patient_id IN(?)", 
-      concept_id, patient_ids])
+      :select => "patient_id, outcome_date",
+      :conditions =>["outcome_date = (SELECT MAX(t2.outcome_date) 
+      FROM patient_historical_outcomes t2
+      WHERE patient_historical_outcomes.patient_id = t2.patient_id)
+      AND outcome_concept_id = ? AND patient_id IN(?)", 
+      concept_id, patient_ids], :group => "patient_id", :limit => 2)
 
-    patient_id = patients.first.patient_id.to_i 
+    patient_id = patients.first.patient_id rescue nil 
+    return nil if patient_id.blank? or patient_id < 1
+    return patient_id 
+  end
+
+  def  self.defaulted_patients_to_archive(patient_ids = [])
+    concept_id = Concept.find_by_name('Defaulter').id
+    patients = PatientHistoricalOutcome.find(:all,
+      :select => "patient_id, outcome_date",
+      :conditions =>["outcome_date = (SELECT MAX(t2.outcome_date) 
+      FROM patient_historical_outcomes t2
+      WHERE patient_historical_outcomes.patient_id = t2.patient_id)
+      AND outcome_concept_id = ? AND patient_id IN(?)", 
+      concept_id, patient_ids], :group => "patient_id", :limit => 2)
+
+    patient_id = patients.first.patient_id rescue nil 
     return nil if patient_id.blank? or patient_id < 1
     return patient_id 
   end
 
   def  self.transferred_out_patients_to_archive(patient_ids = [])
-    concept_names = ['Transfer Out(With Transfer Note)','Transfer Out(Without Transfer Note)']
+    concept_names = ['Transfer Out(With Transfer Note)','Transfer Out(Without Transfer Note)','Transfer out']
     concept_ids = Concept.find(:all,
-      :conditions => ["name IN(?)",concept_names]).map(&:concept_id).join(',')
+      :conditions => ["name IN(?)",concept_names]).map(&:concept_id)
+   
+    patients = PatientHistoricalOutcome.find(:all,
+      :select => "outcome_date date_outcome, patient_id, outcome_concept_id",
+      :conditions => ["outcome_date = (SELECT MAX(t2.outcome_date) 
+      FROM patient_historical_outcomes t2
+      WHERE patient_historical_outcomes.patient_id = t2.patient_id) 
+      AND outcome_concept_id IN(?) AND patient_id IN(?)",
+      concept_ids, patient_ids], :group => "patient_id", :limit => 2)
 
-    patients = PatientHistoricalOutcome.find_by_sql("
-      SELECT max(outcome_date) date_outcome,patient_id,outcome_concept_id 
-      FROM openmrs_lighthouse.patient_historical_outcomes 
-      GROUP BY patient_id HAVING outcome_concept_id IN(#{concept_ids}) 
-      AND patient_id IN(#{patient_ids.join(',')}) ORDER BY date_outcome")
-
-    patient_id = patients.first.patient_id.to_i rescue nil 
+    patient_id = patients.first.patient_id rescue nil 
     return nil if patient_id.blank? or patient_id < 1
     return patient_id 
   end
