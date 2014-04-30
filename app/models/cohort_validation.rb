@@ -751,5 +751,22 @@ class CohortValidation
 
     return self.feed_values(validation_rule, values)
   end
+
+  def validate_total_registered_minus_sum_of_outcomes_equal_total_alive_and_on_art
+    #validate total registered minus all outcomes should equal to total alive and on art
+
+    validation_rule = ValidationRule.find_by_desc('Total registered minus Died total, Defaulted (more than 2 months overdue after expected to have run out of ARVs), Stopped taking ARVs (clinician or patient own decision last known alive), Transfered and Unknown outcome should equal to Total alive and on art')
+
+		return nil if validation_rule.blank?
+
+		values = [self.cum_cohort['alive_on_ART_patients'],
+              self.cum_cohort['all_patients'],
+							self.cum_cohort['dead_patients'],
+							self.cum_cohort['defaulters'],
+							self.cum_cohort['art_stopped_patients'],
+							self.cum_cohort['transferred_out_patients'],
+							self.cum_cohort['patients_with_unknown_outcomes']]
+		return self.feed_values(validation_rule, values)
+	end
 end
 
