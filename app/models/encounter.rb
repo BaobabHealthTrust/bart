@@ -636,6 +636,7 @@ EOF
 
     low_cd4_count_250 = false 
     low_cd4_count_350 = false
+    low_cd4_count_500 = false
 
     latest_cd4_count = patient.cd4_count_when_starting(self.encounter_datetime.to_date) rescue nil
     if not latest_cd4_count.values[0][:value_numeric].blank?
@@ -655,6 +656,8 @@ EOF
         low_cd4_count_250 = true
       elsif cd4_count <= 350 and (cd4_count_date >= '2011-07-01'.to_date)
         low_cd4_count_350 = true
+      elsif cd4_count <= 500 and (cd4_count_date >= '2014-04-01'.to_date)
+        low_cd4_count_500 = true
       end
     end unless latest_cd4_count.blank? 
 
@@ -666,7 +669,7 @@ EOF
       patient.id,self.encounter_datetime.to_date.strftime("%Y-%m-%d 00:00:00"),self.encounter_datetime.to_date.strftime("%Y-%m-%d 23:59:59"),
       cd4_count_available.id]).value_coded == yes_concept_id rescue false
       if cd4_count_done
-        ["CD4 Count < 250","CD4 Count < 350"].each do |c|
+        ["CD4 Count < 250","CD4 Count < 350","CD4 Count < 500"].each do |c|
           concept_id = Concept.find_by_name(c).concept_id
           cd4_count = Observation.find(:first, :conditions =>["patient_id = ?
           AND obs_datetime >=? AND obs_datetime <=? AND concept_id = ? AND voided = 0",
@@ -676,6 +679,8 @@ EOF
             low_cd4_count_250 = true
           elsif c == "CD4 Count < 350" and cd4_count 
             low_cd4_count_350 = true
+           elsif c == "CD4 Count < 500" and cd4_count
+            low_cd4_count_500 = true
           end
         end
       end
@@ -801,6 +806,8 @@ EOF
         return Concept.find_by_name("CD4 count < 750")
       elsif low_cd4_count_350 and first_hiv_enc_date >= '2011-07-01'.to_date
         return Concept.find_by_name("CD4 count < 350")
+      elsif low_cd4_count_500 and first_hiv_enc_date >= '2014-04-01'.to_date
+        return Concept.find_by_name("CD4 count < 500")
       elsif low_cd4_count_250
         return Concept.find_by_name("CD4 count < 250")
       elsif low_lymphocyte_count and who_stage == 2
@@ -816,6 +823,8 @@ EOF
       else
         if low_cd4_count_350 and first_hiv_enc_date >= '2011-07-01'.to_date
           return Concept.find_by_name("CD4 count < 350")
+        elsif low_cd4_count_500 and first_hiv_enc_date >= '2014-04-01'.to_date
+          return Concept.find_by_name("CD4 count < 500")
         elsif low_cd4_count_250
           return Concept.find_by_name("CD4 count < 250")
         elsif low_lymphocyte_count and who_stage == 2
