@@ -806,6 +806,8 @@ EOF
         return Concept.find_by_name("Child HIV positive")
       elsif (age_in_months >= 24 and age_in_months < 56) and cd4_count_less_than_750
         return Concept.find_by_name("CD4 count < 750")
+     elsif age_in_months >= 24 and age_in_months < 60 and first_hiv_enc_date >=  '2014-04-01'.to_date
+        return Concept.find_by_name("Child HIV positive")
       elsif low_cd4_count_350 and first_hiv_enc_date >= '2011-07-01'.to_date
         return Concept.find_by_name("CD4 count < 350")
       elsif low_cd4_count_500 and first_hiv_enc_date >= '2014-04-01'.to_date
